@@ -373,7 +373,8 @@ class MainWindow(QMainWindow):
 
         self.chk_msr = TickCheckBox("Enable MSR Hardware Mod (Requires Root Password once)")
         self.chk_msr.setChecked(self.config.get("enable_msr", False))
-        self.chk_msr.setToolTip("Modifies CPU hardware prefetchers for a 15-20% hashrate boost.")
+        self.chk_msr.setToolTip("Modifies CPU hardware prefetchers for a 15-20% hashrate boost." if not is_flatpak_env else "MSR modifications require root access, which is blocked by the Flatpak sandbox.")
+        if is_flatpak_env: self.chk_msr.setEnabled(False)
         ml.addRow("", self.chk_msr)
 
         self.lbl_github = QLabel('<a href="https://github.com/C-Yassin/Amethyst-Miner/wiki/How-to-Enable-MSR-via-GRUB" style="color: #8be9fd; text-decoration: none;">[?] Help: How to fix MSR blocking via GRUB</a>')
