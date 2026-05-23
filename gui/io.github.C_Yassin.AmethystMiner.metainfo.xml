@@ -46,9 +46,9 @@
     </screenshots>
 
     <releases>
-        <release version="1.0.0" date="2026-05-06">
+        <release version="v1.1" date="2026-05-23">
             <description>
-                <p>Initial release of Amethyst Miner.</p>
+                <p>Major bug fixes and hashrate improvements.</p>
             </description>
         </release>
     </releases>
