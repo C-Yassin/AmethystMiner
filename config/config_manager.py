@@ -12,6 +12,7 @@ MINER_DIR = "/app/bin" if is_flatpak_env else os.path.join(CONFIG_DIR, "bin")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUI_DIR = os.path.join(BASE_DIR, "gui")
 CORE_DIR = os.path.join(BASE_DIR, "core")
+app_id = "io.github.C_Yassin.AmethystMiner"
 
 def get_icon_path(name):
     return os.path.join(GUI_DIR, name)

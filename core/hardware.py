@@ -1,12 +1,12 @@
 import os, sys, hashlib, uuid
-import re
+import re, shutil
 import subprocess
 import signal
 from datetime import datetime
 
 from PyQt6.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QCursor
-from config.config_manager import is_flatpak_env, CORE_DIR, MINER_DIR
+from config.config_manager import is_flatpak_env, CORE_DIR, MINER_DIR, app_id
 
 class MinerSetupThread(QThread):
     result_signal = pyqtSignal(bool)
@@ -63,8 +63,33 @@ class MinerManager(QObject):
         self.is_running = False
 
     def get_binary_path(self): 
+        if is_flatpak_env:
+            host_visible_dir = os.path.expanduser(f"~/.var/app/{app_id}/data")
+            host_bin_path = os.path.join(host_visible_dir, "xmrig")
+            host_config_path = os.path.join(host_visible_dir, "config.json")
+
+            sandbox_bin = "/app/bin/xmrig"
+            sandbox_config = "/app/share/amethystminer/config.json" 
+
+            os.makedirs(host_visible_dir, exist_ok=True)
+
+            if not os.path.exists(host_bin_path) and os.path.exists(sandbox_bin):
+                shutil.copy2(sandbox_bin, host_bin_path)
+                os.chmod(host_bin_path, 0o755)
+                
+            if not os.path.exists(host_config_path) and os.path.exists(sandbox_config):
+                shutil.copy2(sandbox_config, host_config_path)
+                    
+            return host_bin_path
+
         aur_path = os.path.join(CORE_DIR, "xmrig")
-        return aur_path if os.path.exists(aur_path) else "/app/bin/xmrig" if is_flatpak_env else os.path.join(CORE_DIR, "xmrig.exe") if os.name == "nt" else os.path.join(MINER_DIR, "xmrig_custom", "xmrig") 
+        if os.path.exists(aur_path):
+            return aur_path
+            
+        if os.name == "nt":
+            return os.path.join(CORE_DIR, "xmrig.exe")
+            
+        return os.path.join(MINER_DIR, "xmrig_custom", "xmrig")
 
     def ensure_downloaded(self) -> bool:
         bin_path = self.get_binary_path()
@@ -110,7 +135,6 @@ class MinerManager(QObject):
             return False
 
     def _apply_msr(self) -> bool:
-        """Checks for MSR capabilities and uses native KDE Polkit to prompt for password if missing."""
         bin_path = self.get_binary_path()
         try:
             res = subprocess.run(["getcap", bin_path], capture_output=True, text=True)
@@ -121,10 +145,13 @@ class MinerManager(QObject):
             print("[DEBUG] MSR capabilities missing. Triggering graphical Polkit prompt...")
             self.status_changed.emit("authenticating")
             
-            cmd = [
-                "pkexec", "sh", "-c", 
-                f"modprobe msr && setcap cap_sys_rawio=ep '{bin_path}'"
-            ]
+            if not is_flatpak_env:
+                cmd = [
+                    "pkexec", "sh", "-c", 
+                    f"modprobe msr && setcap cap_sys_rawio=ep '{bin_path}'"
+                ]
+            else:
+                cmd = ["flatpak-spawn", "--host", "pkexec", "modprobe", "msr"]
             subprocess.run(cmd, check=True)
             
             print("[DEBUG] MSR mod applied successfully.")
@@ -171,7 +198,7 @@ class MinerManager(QObject):
             "--threads", str(args["threads"]), 
             "--cpu-priority", str(args["priority"])
         ]
-
+        
         try:
             kwargs = {}
             if sys.platform == 'win32':
@@ -180,10 +207,19 @@ class MinerManager(QObject):
             else:
                 kwargs.update(preexec_fn=os.setsid)
 
+            
+            
+            if self.setup_thread.enable_msr:
+                if is_flatpak_env:
+                    cmd = ["flatpak-spawn", "--host", "pkexec"] + cmd
+                else:
+                    cmd = ["pkexec"] + cmd
+
             self._proc = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
                 text=True, bufsize=1, **kwargs
             )
+                
             self._thread = MinerOutputThread(self._proc)
             self._thread.hashrate_signal.connect(self.hashrate_updated.emit)
             self._thread.start()

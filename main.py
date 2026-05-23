@@ -686,25 +686,15 @@ StartupNotify=false
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    icon_pixmap = QPixmap(256, 256)
-    icon_pixmap.fill(Qt.GlobalColor.transparent)
+    icon_path = get_icon_path("amethyst.svg")
     
-    renderer = QSvgRenderer(get_icon_path("amethyst-flatpak-icon.svg" if is_flatpak_env else "amethyst.svg"))
-    painter = QPainter(icon_pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    renderer.render(painter)
-    painter.end()
-    
-    app_icon = QIcon(icon_pixmap)
+    app_icon = QIcon(icon_path)
     
     app.setStyle("Fusion")
     app.setWindowIcon(app_icon)
     app.setQuitOnLastWindowClosed(False)
     
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    timer = QTimer()
-    timer.start(500)
-    timer.timeout.connect(lambda: None)
     
     win = MainWindow()
     if "--start-minimized" not in sys.argv:
