@@ -1,5 +1,5 @@
 import os
-import json, shutil
+import json
 from PyQt6.QtCore import QStandardPaths
 
 is_flatpak_env = 'FLATPAK_ID' in os.environ or os.path.exists('/.flatpak-info')
