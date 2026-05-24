@@ -207,8 +207,6 @@ class MinerManager(QObject):
             else:
                 kwargs.update(preexec_fn=os.setsid)
 
-            
-            
             if self.setup_thread.enable_msr:
                 if is_flatpak_env:
                     cmd = ["flatpak-spawn", "--host", "pkexec"] + cmd
