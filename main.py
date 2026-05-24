@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                               QMessageBox, QSpinBox, QFormLayout,
                               QTimeEdit, QGroupBox, QSizePolicy, QSystemTrayIcon, QMenu)
 from PyQt6.QtGui import QCursor, QPainter, QColor, QAction, QPixmap, QIcon
-from PyQt6.QtSvg import QSvgRenderer
 from config.config_manager import GUI_DIR, load_config, save_config, get_icon_path, is_flatpak_env
 from gui.gui_manager import TickCheckBox, PremiumLineChart
 from core.hardware import MinerManager, AutomationManager
@@ -374,12 +373,17 @@ class MainWindow(QMainWindow):
         self.chk_msr = TickCheckBox("Enable MSR Hardware Mod (Requires Root Password once)")
         self.chk_msr.setChecked(self.config.get("enable_msr", False))
         self.chk_msr.setToolTip("Modifies CPU hardware prefetchers for a 15-20% hashrate boost." if not is_flatpak_env else "MSR modifications require root access, which is blocked by the Flatpak sandbox.")
+        
+        def _on_msr_toggled(is_checked):
+            if is_checked: QMessageBox.information(self, "Saved", "Settings saved. If the miner is running, restart the app and run as Administator to apply changes.")
+
+        self.chk_msr.toggled.connect(_on_msr_toggled)
         if is_flatpak_env: self.chk_msr.setEnabled(False)
         ml.addRow("", self.chk_msr)
 
-        self.lbl_github = QLabel('<a href="https://github.com/C-Yassin/Amethyst-Miner/wiki/How-to-Enable-MSR-via-GRUB" style="color: #8be9fd; text-decoration: none;">[?] Help: How to fix MSR blocking via GRUB</a>')
+        self.lbl_github = QLabel('<a href="https://github.com/C-Yassin/Amethyst-Miner/wiki/How-to-Enable-MSR-via-GRUB" style="color: #8be9fd; text-decoration: none;">[?] Help: How to fix MSR blocking</a>')
         self.lbl_github.setOpenExternalLinks(True)
-        self.lbl_github.setToolTip("Click to open the GRUB tutorial in your web browser.")
+        self.lbl_github.setToolTip("Click to open the tutorial in your web browser.")
         ml.addRow("", self.lbl_github)
         
         form.addWidget(grp_miner)
@@ -653,7 +657,6 @@ StartupNotify=false
         self.config["worker_name"] = self.inp_worker.text().strip() or "LinuxRig"
         self.config["threads"] = self.spin_threads.value()
         self.config["enable_msr"] = self.chk_msr.isChecked()
-        
         self.config["idle_enabled"] = self.chk_idle.isChecked()
         self.config["idle_minutes"] = self.spin_idle.value()
         
