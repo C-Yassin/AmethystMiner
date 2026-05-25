@@ -5,7 +5,7 @@
 </div>
 <p align="center">
   <a href="https://flathub.org/en/apps/io.github.C_Yassin.AmethystMiner"><img alt="Flathub" src="https://img.shields.io/badge/Flathub-Available-purple?logo=flatpak"></a>
-  <a href="#">
+  <a href="https://aur.archlinux.org/packages/amethystminer">
     <img alt="AUR Package" src="https://img.shields.io/aur/version/amethyst-miner?color=purple&label=AUR&logo=arch-linux">
   </a>
   <a href="https://github.com/C-Yassin/AmethystMiner/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/C-Yassin/AmethystMiner?color=blueviolet&label=Latest%20Release"></a>
